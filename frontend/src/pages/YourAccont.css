@@ -1,0 +1,53 @@
+.container-account {
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+}
+.contratos {
+  margin: 30px;
+}
+
+.contratos ul {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: center;
+  justify-content: center;
+}
+
+.contratos ul li {
+  list-style: none;
+  border: 1px solid gray;
+  padding: 30px;
+}
+
+.account-titulo {
+  text-transform: uppercase;
+  color: cornflowerblue;
+  font-size: 1.5rem;
+}
+
+.perfils {
+  display: flex;
+  justify-content: space-around;
+  margin: 10px 0;
+  background: cornflowerblue;
+  border-radius: 20px;
+  width: 250px;
+}
+
+.perfils:hover {
+  color: white;
+}
+
+.perfils p {
+  width: 60px;
+  text-transform: uppercase;
+}
+
+.perfils button {
+  border: 1px solid cornflowerblue;
+  border-radius: 20px;
+  width: 60px;
+  background: white;
+  cursor: pointer;
+}

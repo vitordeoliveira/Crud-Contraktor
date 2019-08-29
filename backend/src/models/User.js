@@ -23,6 +23,10 @@ const UserSchema = new Schema(
       type: String,
       required: true
     },
+    senha: {
+      type: String,
+      required: true
+    },
     contratos: [
       {
         type: Schema.Types.ObjectId,

@@ -5,14 +5,22 @@ const validarCpf = require("validar-cpf");
 module.exports = {
   async index(req, res) {
     const { userlogged } = req.headers;
+    const { cpf } = await User.findById(userlogged);
     const contracts = { mycontrats: [], otherContrats: [] };
+    //Contratos do usuario
     const myContracts = await Contract.find({ user: userlogged });
+    myContracts.forEach(contract => {
+      contracts.mycontrats.unshift(contract);
+    });
+    //Outros contratos
     const othersContract = await Contract.find({ user: { $ne: userlogged } });
-    contracts.mycontrats.push(myContracts);
-    othersContract.forEach(part => {
-      if (part.partes.includes(userlogged)) {
-        contracts.otherContrats.push(part);
-      }
+    othersContract.map(contratos => {
+      let { partes } = contratos;
+      partes.map(parte => {
+        if (parte.cpf === cpf) {
+          contracts.otherContrats.unshift(contratos);
+        }
+      });
     });
 
     return res.json(contracts);
@@ -21,41 +29,64 @@ module.exports = {
   async store(req, res) {
     try {
       const { userlogged } = req.headers;
-      const { titulo, from, to, doc, partes } = await req.body;
-      //Map das partes
-      const parts = partes.split(";").map(parte => parte.trim());
-
-      //Capturando o ID dos cpfs & Verificar validade dos cpfs
-      //--@--Checar cfps repetidos
-      const ids = [];
-      const wait = [];
-      for (let index = 0; index < parts.length; index++) {
-        let validation = validarCpf(parts[index]);
-
-        if (validation) {
-          let partUser = await User.findOne({ cpf: parts[index] });
-
-          if (partUser) {
-            ids.push(partUser._id);
-          } else {
-            wait.push(parts[index]);
-          }
-        } else {
-          console.log(`CPF ${parts[index]} inválido`);
-        }
+      if (!userlogged) {
+        return res.status(400).json({ msg: "Precisa estar logado" });
       }
 
-      const contract = await Contract.create({
+      const { titulo, from, to, doc, partes } = await req.body;
+      const contract = {
         user: userlogged,
         titulo,
         from,
         to,
         doc,
-        partes: ids,
-        waiting: wait
+        partes
+      };
+
+      if (!titulo || !from || !to || !doc) {
+        return res
+          .status(400)
+          .json({ msg: `Alguma parte obrigatoria esta faltando` });
+      }
+
+      //Checar validade todos os CPFs
+      partes.forEach(usuario => {
+        let { cpf } = usuario;
+        let corrections = cpf.trim();
+        let check = validarCpf(corrections);
+        if (!check) {
+          return res.status(400).json({ msg: `CPF:${corrections} invalido` });
+        }
       });
 
-      return res.json(contract);
+      //Checar CPFs repetidos
+      for (let x = 0; x < partes.length - 1; x++) {
+        for (let y = x + 1; y < partes.length; y++) {
+          if (partes[x].cpf === partes[y].cpf) {
+            return res
+              .status(400)
+              .json({ msg: `CPF:${partes[x].cpf} repetido` });
+          }
+        }
+      }
+
+      // Criando contrato no DB
+      const contractSaved = await Contract.create(contract);
+
+      //Map das partes
+      partes.map(async usuario => {
+        let { cpf } = usuario;
+        let corrections = cpf.trim();
+        //Checar se a parte j? existe no sistema
+        let partUser = await User.findOne({ cpf: corrections });
+        if (partUser) {
+          //Cadastrar em contratos na sua conta
+          await partUser.contratos.unshift(contractSaved._id);
+          await partUser.save();
+        }
+      });
+
+      return res.json(contractSaved);
     } catch (err) {
       res.json(err.message);
     }
@@ -63,10 +94,16 @@ module.exports = {
 
   async indexOne(req, res) {
     try {
+      const { loggeduser } = req.headers;
       const idContract = req.params.id;
       const contract = await Contract.findById(idContract);
-
-      res.json(contract);
+      const { cpf } = await User.findById(loggeduser);
+      contract.partes.map(parte => {
+        if (contract.user === loggeduser || parte.cpf === cpf) {
+          return res.json(contract);
+        }
+        return res.status(401).json({ msg: "nao autorizado" });
+      });
     } catch (err) {
       res.status(404).json({ msg: "Contract not found " });
     }

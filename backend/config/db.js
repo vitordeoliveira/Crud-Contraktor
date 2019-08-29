@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const config = require("config");
 const db = config.get("mongoURI");
 
+// CHANGE TO LOCALSERVER - "mongoURI": "mongodb://localhost:27017/myproject"
 const connectDB = async () => {
   try {
     mongoose.connect(db, {
