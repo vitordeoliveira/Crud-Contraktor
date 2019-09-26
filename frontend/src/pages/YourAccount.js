@@ -5,7 +5,6 @@ import Moment from "react-moment";
 import "./YourAccont.css";
 
 const YourAccount = ({ match }) => {
-  const id = localStorage.getItem("userlogged");
   const [contracts, setContracts] = useState({
     mycontrats: [],
     otherContrats: []
@@ -23,7 +22,8 @@ const YourAccount = ({ match }) => {
 
   return (
     <div className="container-account">
-      <Link to={`/contratos/${id}`}>CONTRATOS</Link>
+      <Link to={`/contrato`}>CONTRATOS</Link>
+      <Link to={`/`}>/HOME</Link>
       <h1>Seus Contratos</h1>
       <div className="contratos">
         <ul>

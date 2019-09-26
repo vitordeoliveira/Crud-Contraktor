@@ -21,7 +21,13 @@ function Login({ history }) {
       const { data } = await api.post("/usuarios", formData);
       localStorage.removeItem("userlogged");
       localStorage.setItem("userlogged", data._id);
-      history.push(`/youraccount/${data._id}`);
+
+      if (localStorage.getItem("contract-invalid-path")) {
+        await localStorage.removeItem("contract-invalid-path");
+        history.push(`/contrato`);
+      } else {
+        history.push(`/youraccount/${data._id}`);
+      }
     } catch (err) {
       setError(err.response.data);
       setToggle(true);

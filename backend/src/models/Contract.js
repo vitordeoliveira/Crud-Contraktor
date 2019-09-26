@@ -21,7 +21,7 @@ const ContractSchema = new Schema(
       required: true
     },
     doc: {
-      type: Boolean,
+      type: Object,
       required: true
     },
     partes: [

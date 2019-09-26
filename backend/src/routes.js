@@ -14,5 +14,7 @@ routes.get("/contratos", ContractController.index);
 routes.post("/contratos", ContractController.store);
 routes.get("/contratos/:id", ContractController.indexOne);
 routes.delete("/contratos/:id", ContractController.delete);
+routes.post("/upload", ContractController.upload);
+routes.get("/download/:filename", ContractController.download);
 
 module.exports = routes;

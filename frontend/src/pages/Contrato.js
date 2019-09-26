@@ -1,14 +1,16 @@
-import React, { useState, Fragment } from "react";
+import React, { useState, Fragment, useEffect } from "react";
+import { Link } from "react-router-dom";
 import "./Contrato.css";
-
 import api from "../services/api";
 
-function Contrato({ history, match }) {
+function Contrato({ history }) {
+  const [file, setFile] = useState({});
+
   const [formData, setFormData] = useState({
     titulo: "",
     from: "",
     to: "",
-    doc: true,
+    doc: "",
     partes: []
   });
 
@@ -20,27 +22,35 @@ function Contrato({ history, match }) {
     telefone: ""
   });
 
-  const [displaySocialInputs, toggleSocialInputs] = useState(false);
-
   const [newPartes, setNewPartes] = useState([]);
 
+  useEffect(() => {
+    setFormData({ titulo, from, to, partes: newPartes });
+    // eslint-disable-next-line
+  }, [newPartes]);
+
+  useEffect(() => {
+    setFormData({ titulo, from, to, doc: file, partes: newPartes });
+    // eslint-disable-next-line
+  }, [file]);
+
+  const [displaySocialInputs, toggleSocialInputs] = useState(false);
   const [error, setError] = useState({});
   const [toggle, setToggle] = useState(false);
   const [toggleParts, setToggleParts] = useState(false);
-
-  const { titulo, from, to, doc } = formData;
+  const [togglePartsContract, setTogglePartsContract] = useState(false);
+  const { titulo, from, to } = formData;
   const { nome, sobrenome, email, cpf, telefone } = partes;
 
   async function handleSubmit(e) {
     try {
       e.preventDefault();
       const id = localStorage.getItem("userlogged");
-      setFormData({ titulo, from, to, doc, newPartes });
       const res = await api.post("/contratos", formData, {
         headers: { userlogged: id }
       });
-
       console.log(res.data);
+      history.push(`/youraccount/${id}`);
     } catch (err) {
       setError(err.response.data);
       setToggle(true);
@@ -51,17 +61,72 @@ function Contrato({ history, match }) {
     }
   }
 
+  async function handleContract(e) {
+    e.preventDefault();
+    const fileData = new FormData();
+    fileData.append("file", file);
+    try {
+      const res = await api.post("/upload", fileData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      const { data } = res;
+      setFile(data.data);
+
+      setTogglePartsContract(true);
+      setTimeout(() => {
+        setTogglePartsContract(false);
+      }, 2000);
+    } catch (err) {
+      setError(err.response.data);
+      setTogglePartsContract(true);
+      setTimeout(() => {
+        setTogglePartsContract(false);
+        setError("");
+      }, 3000);
+    }
+  }
+
   async function handlePartes(e) {
     try {
       e.preventDefault();
       setPartes(partes);
-      setNewPartes(copia => [...copia, partes]);
-      setPartes({ nome: "", sobrenome: "", email: "", cpf: "", telefone: "" });
-      setToggleParts(true);
+      if (
+        partes.nome ||
+        partes.sobrenome ||
+        partes.cpf ||
+        partes.email ||
+        partes.telefone
+      ) {
+        setNewPartes(copia => [...copia, partes]);
+        setPartes({
+          nome: "",
+          sobrenome: "",
+          email: "",
+          cpf: "",
+          telefone: ""
+        });
+        setToggleParts(true);
+        setTimeout(() => {
+          setToggleParts(false);
+        }, 2000);
+      } else {
+        setError({ msg: "Preencha todos os dados" });
+        setToggleParts(true);
+        setTimeout(() => {
+          setToggleParts(false);
+          setError("");
+        }, 3000);
+      }
+    } catch (err) {
+      setError(err.response.data);
+      setToggle(true);
       setTimeout(() => {
-        setToggleParts(false);
-      }, 2000);
-    } catch (err) {}
+        setToggle(false);
+        setError("");
+      }, 3000);
+    }
   }
 
   const onChange = e => {
@@ -72,8 +137,12 @@ function Contrato({ history, match }) {
     setPartes({ ...partes, [e.target.name]: e.target.value });
   };
 
+  const onChangeContract = e => {
+    setFile(e.target.files[0]);
+  };
+
   return (
-    <div className="container-cadastro">
+    <div id="#1" className="container-cadastro">
       <form className="form-cadastro" onSubmit={e => handleSubmit(e)}>
         {toggle && <div className="error-msg">{error.msg}</div>}
 
@@ -104,13 +173,23 @@ function Contrato({ history, match }) {
           type="button"
           className="btn-partes"
         >
-          Adicionar Partes
+          {displaySocialInputs ? (
+            <Fragment>Parar de adicionar</Fragment>
+          ) : (
+            <Fragment>Adicionar Partes</Fragment>
+          )}
         </button>
 
         {displaySocialInputs && (
           <Fragment>
             {toggleParts && (
-              <div className="toggle-success">adicionado com sucesso</div>
+              <Fragment>
+                {error.msg ? (
+                  <div className="error-msg">{error.msg}</div>
+                ) : (
+                  <div className="toggle-success">Adicionado com sucesso</div>
+                )}
+              </Fragment>
             )}
             <div className="form-partes">
               <input
@@ -128,14 +207,14 @@ function Contrato({ history, match }) {
                 onChange={e => onChangePartes(e)}
               ></input>
               <input
-                type="text"
+                type="email"
                 placeholder="email"
                 name="email"
                 value={email}
                 onChange={e => onChangePartes(e)}
               ></input>
               <input
-                type="text"
+                type="number"
                 placeholder="cpf"
                 name="cpf"
                 value={cpf}
@@ -154,6 +233,39 @@ function Contrato({ history, match }) {
             </div>
           </Fragment>
         )}
+
+        {/* Adicionar o Documento */}
+        {togglePartsContract && (
+          <Fragment>
+            {error.msg ? (
+              <div className="error-msg">{error.msg}</div>
+            ) : (
+              <div className="toggle-success">Adicionado com sucesso</div>
+            )}
+          </Fragment>
+        )}
+        <div>
+          <div>
+            <input
+              type="file"
+              id="customFile"
+              onChange={e => onChangeContract(e)}
+            ></input>
+            <label htmlFor="customFile"></label>
+          </div>
+
+          <input
+            type="submit"
+            value="Upload"
+            onClick={e => handleContract(e)}
+          ></input>
+        </div>
+
+        <Link to="/files/myfiles.txt" target="_blank" download>
+          DOW
+        </Link>
+
+        {/* FINISH */}
         <button type="submit">Enviar</button>
       </form>
     </div>
