@@ -110,36 +110,6 @@ module.exports = {
     }
   },
 
-  async upload(req, res) {
-    if (req.files === null) {
-      return res.status(400).json({ msg: "No file uploaded" });
-    }
-    var file = req.files.file;
-    console.log(file);
-    if (
-      file.mimetype === "application/pdf" ||
-      file.mimetype === "application/msword"
-    ) {
-      var buf = JSON.stringify(file);
-      var temp = JSON.parse(buf.toString());
-      var bufferConverter = Buffer.from(temp.data);
-      fs.writeFile(`./src/data/${file.name}`, bufferConverter, () => {
-        console.log("ok");
-      });
-
-      return res.json({ data: temp.data, filename: file.name });
-    }
-
-    return res
-      .status(400)
-      .json({ msg: "Algo deu errado, preencha o campo com DOC ou PDF" });
-  },
-
-  async download(req, res) {
-    const file = req.params.filename;
-    res.download(`./src/data/${file}`);
-  },
-
   async delete(req, res) {
     try {
       const idContract = req.params.id;
