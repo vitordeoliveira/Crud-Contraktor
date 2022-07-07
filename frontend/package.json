@@ -6,7 +6,7 @@
     "axios": "^0.19.0",
     "file-saver": "^2.0.2",
     "js-file-download": "^0.4.8",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-download-link": "^2.2.0",
